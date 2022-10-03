@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>offb</name>
+  <version>1.0.0</version>
+  <description>Offboard mode node package.</description>
+
+  <maintainer email="chenjun6403@163.com">trantuan-20048607</maintainer>
+
+  <license>MIT</license>
+
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+  <depend>pluginlib</depend>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>tf</build_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>tf</build_export_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>tf</exec_depend>
+
+  <build_depend>actionlib</build_depend>
+  <build_depend>move_base_msgs</build_depend>
+  <exec_depend>actionlib</exec_depend>
+  <exec_depend>move_base_msgs</exec_depend>
+
+  <build_export_depend>offb_msgs</build_export_depend>
+  <exec_depend>offb_msgs</exec_depend>
+
+  <build_export_depend>vision_opencv</build_export_depend>
+  <exec_depend>vision_opencv</exec_depend>
+
+  <export></export>
+</package>
