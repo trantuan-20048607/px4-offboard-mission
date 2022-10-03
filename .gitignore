@@ -1,2 +1,10 @@
+## Preserve build.yaml and config.yaml.
 .catkin_tools
+
+## Hide private VSCode configurations.
 .vscode
+
+## Ignore catkin temporary files.
+build
+devel
+logs

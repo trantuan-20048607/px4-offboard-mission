@@ -1,7 +1,7 @@
 #ifndef CSI_CAMERA_H
 #define CSI_CAMERA_H
 
-#include <string>
+#include <opencv2/opencv.hpp>
 
 inline std::string gstreamer_pipeline(int capture_width, int capture_height,
                                       int display_width, int display_height,
