@@ -3,8 +3,6 @@
 
 #include "offboard_control.h"
 
-using namespace std;
-
 double desire_z;         // 无人机将一直以这个高度飞行
 double desire_vz = 0.5;  // 无人机以这个速度起飞降落
 int num_fly;             // 无人机的航点个数
@@ -57,48 +55,48 @@ int not_arrived(int i) {
 }
 
 void fly_high(int i, double desire_z) {
-  OffboardControl Offb_;
+  offboard_control::OffboardControl offb;
   ros::Rate rate(20.0);
-  cout << "正在上升中" << endl;
+  std::cout << "正在上升中" << std::endl;
   Eigen::Vector3d high_pos;
   high_pos[0] = pos_drone[0];
   high_pos[1] = pos_drone[1];
   high_pos[2] = 0.3;
   while (abs(pos_drone[2] - desire_z) > 0.05) {
     if (state_drone.armed) {
-      Offb_.send_local_pos_setpoint(high_pos);
+      offb.send_local_pos_setpoint(high_pos);
       if (high_pos[2] < desire_z + 0.1) {
         high_pos[2] += change;
       }
     } else {
-      cout << "无人机已上锁" << endl;
+      std::cout << "无人机已上锁" << std::endl;
     }
     ros::spinOnce();
     rate.sleep();
   }
-  cout << "已经到达期望高度" << endl;
+  std::cout << "已经到达期望高度" << std::endl;
 }
 
 void fly_to(int i) {
-  OffboardControl Offb_;
+  offboard_control::OffboardControl offb;
   ros::Rate rate(20.0);
-  cout << "正在飞往下一个目标点" << endl;
+  std::cout << "正在飞往下一个目标点" << std::endl;
   while (not_arrived(i)) {
     add_target(i);
-    Offb_.send_local_pos_setpoint(next_point);
+    offb.send_local_pos_setpoint(next_point);
     ros::spinOnce();
     rate.sleep();
   }
-  cout << "已经到达目标点上方" << endl;
+  std::cout << "已经到达目标点上方" << std::endl;
 }
 
 void landing() {
-  OffboardControl Offb_;
+  offboard_control::OffboardControl offb;
   ros::Rate rate(20.0);
   Eigen::Vector3d land_pos = end_point;
-  cout << "准备降落" << endl;
+  std::cout << "准备降落" << std::endl;
   while (abs(vel_drone[2]) > 0.1 || pos_drone[2] > 0.1) {
-    Offb_.send_local_pos_setpoint(land_pos);
+    offb.send_local_pos_setpoint(land_pos);
     if (land_pos[2] > -0.5) {
       land_pos[2] -= change;
     } else {
@@ -107,7 +105,7 @@ void landing() {
     ros::spinOnce();
     rate.sleep();
   }
-  cout << "降落成功, 怠速旋转" << endl;
+  std::cout << "降落成功, 怠速旋转" << std::endl;
 }
 
 void unload(int i) {
@@ -120,25 +118,25 @@ void unload(int i) {
   land_pos[0] = pos_drone[0];
   land_pos[1] = pos_drone[1];
   land_pos[2] = -0.5;
-  OffboardControl Offb_;
+  offboard_control::OffboardControl offb;
   ros::Time last_request = ros::Time::now();
   while (ros::Time::now() - last_request < ros::Duration(3.0)) {
     ros::spinOnce();
     rate.sleep();
-    Offb_.send_pos_setpoint(land_pos, 0);
+    offb.send_pos_setpoint(land_pos, 0);
   }
-  Offb_.send_serial_num(i);
+  offb.send_serial_num(i);
   last_request = ros::Time::now();
   while (ros::Time::now() - last_request < ros::Duration(2.0)) {
     ros::spinOnce();
     rate.sleep();
-    Offb_.send_pos_setpoint(land_pos, 0);
+    offb.send_pos_setpoint(land_pos, 0);
   }
-  cout << "投放完毕" << endl;
+  std::cout << "投放完毕" << std::endl;
 }
 
 int main(int argc, char **argv) {
-  ros::init(argc, argv, "com_node");
+  ros::init(argc, argv, "com");
   ros::NodeHandle nh;
   ros::ServiceClient arming_client =
       nh.serviceClient<mavros_msgs::CommandBool>  // 定义服务, 用来解锁无人机
@@ -157,7 +155,7 @@ int main(int argc, char **argv) {
   mavros_msgs::CommandBool arm_cmd;    // 定义解锁飞机的变量
   offb_set_mode.request.custom_mode = "AUTO.LAND";  // 更改飞行模式为手动
   arm_cmd.request.value = false;                    // 对飞机上锁
-  OffboardControl Offb_;
+  offboard_control::OffboardControl offb;
   nh.getParam("com_node/desire_z", desire_z);
   nh.getParam("com_node/change", change);
   // ros::param::get("~desire_z", desire_z);
@@ -166,17 +164,18 @@ int main(int argc, char **argv) {
     ros::spinOnce();
     rate.sleep();
   }
-  cout << "无人机的巡航高度是: " << desire_z << endl;
-  cout << "请输入航点个数: " << endl;
-  cin >> num_fly;
+  std::cout << "无人机的巡航高度是: " << desire_z << std::endl;
+  std::cout << "请输入航点个数: " << std::endl;
+  std::cin >> num_fly;
+  std::cin.get();
   for (int i = 1; i <= num_fly; i++) {
-    cout << "请输入第" << i << "个航点: ";
-    cin >> fly_point[i][0] >> fly_point[i][1] >> fly_point[i][2];
+    std::cout << "请输入第" << i << "个航点: ";
+    std::cin >> fly_point[i][0] >> fly_point[i][1] >> fly_point[i][2];
     fly_point[i][2] = desire_z;
   }
   fly_point[0][2] = desire_z;
   fly_point[num_fly + 1][2] = desire_z;
-  cout << "等待OFFBOARD模式以及解锁飞机" << endl;
+  std::cout << "等待OFFBOARD模式以及解锁飞机" << std::endl;
   while (state_drone.mode != "OFFBOARD" || !state_drone.armed) {
     ros::spinOnce();
     rate.sleep();
@@ -195,16 +194,16 @@ int main(int argc, char **argv) {
     fly_to(i);
     landing();
     unload(i + 1);
-    cout << "第" << i + 1 << "个点的任务已经完成" << endl;
+    std::cout << "第" << i + 1 << "个点的任务已经完成" << std::endl;
   }
-  cout << "所有任务点飞行结束" << endl;
+  std::cout << "所有任务点飞行结束" << std::endl;
   while (state_drone.mode != "AUTO.LAND") {
     offb_set_mode.request.custom_mode = "AUTO.LAND";
     set_mode_client.call(offb_set_mode);
     ros::spinOnce();
     rate.sleep();
   }
-  cout << "已经成功切换到AUTO.LAND模式" << endl;
+  std::cout << "已经成功切换到AUTO.LAND模式" << std::endl;
   ros::Time land_time = ros::Time::now();
   while (state_drone.armed) {
     if (ros::Time::now() - land_time > ros::Duration(2.0)) {
@@ -213,6 +212,6 @@ int main(int argc, char **argv) {
     ros::spinOnce();
     rate.sleep();
   }
-  cout << "无人机成功上锁" << endl;
+  std::cout << "无人机成功上锁" << std::endl;
   return 0;
 }

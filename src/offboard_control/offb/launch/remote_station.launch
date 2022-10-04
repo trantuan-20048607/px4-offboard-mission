@@ -12,9 +12,9 @@
         <param name="change" value="$(arg change)" />
     </node>
     <!--显示无人机的状态以及速度-->
-    <node name="monitor_node" pkg="offb" type="monitor_node" output="screen" launch-prefix="gnome-terminal --window --" />
+    <node name="state_monitor_node" pkg="offb" type="state_monitor_node" output="screen" launch-prefix="gnome-terminal --window --" />
     <!--改变无人机的模式-->
-    <node name="set_mode_node" pkg="offb" type="set_mode_node" output="screen" launch-prefix="gnome-terminal --window --" />
+    <node name="mode_control_node" pkg="offb" type="mode_control_node" output="screen" launch-prefix="gnome-terminal --window --" />
     <!--串口输入改变舵机状态-->
     <node name="servo_control_node" pkg="offb" type="servo_control_node" output="screen" launch-prefix="gnome-terminal --window --" />
 </launch>

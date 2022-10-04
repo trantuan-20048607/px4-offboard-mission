@@ -6,8 +6,10 @@
 	<include file="$(find realsense2_camera)/launch/rs_t265.launch" />
 	<include file="$(find vision_to_mavros)/launch/t265_tf_to_mavros.launch" />
 
-	<node name="test_node" pkg="offb" type="test_node" output="screen">
+	<node name="uav_node" pkg="offb" type="uav_node" output="screen">
 		<param name="Baudrate" value="$(arg Baudrate)" />
 		<param name="throw_serial_port" value="$(arg throw_serial_port)" />
 	</node>
+
+	<node name="vision_node" pkg="offb" type="vision_node" output="screen" launch-prefix="gnome-terminal --window --"></node>
 </launch>

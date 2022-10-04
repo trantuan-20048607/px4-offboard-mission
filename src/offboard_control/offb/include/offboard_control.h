@@ -16,6 +16,8 @@
 
 #include <Eigen/Dense>
 
+namespace offboard_control {
+
 class OffboardControl {
  public:
   OffboardControl() : offboard_nh_("~") {
@@ -35,7 +37,7 @@ class OffboardControl {
     setpoint_raw_attitude_pub_ =
         offboard_nh_.advertise<mavros_msgs::AttitudeTarget>(
             "/mavros/setpoint_raw/attitude", 10);
-    serial_num_pub = offboard_nh_.advertise<std_msgs::UInt8>("/servo", 1);
+    serial_num_pub_ = offboard_nh_.advertise<std_msgs::UInt8>("/servo", 1);
   }
   void send_velxy_posz_setpoint(const Eigen::Vector3d& vel_sp, float desire_z);
   void send_pos_setpoint(const Eigen::Vector3d& pos_sp, float yaw_sp);
@@ -63,16 +65,17 @@ class OffboardControl {
   ros::Publisher actuator_setpoint_pub_;
   ros::Publisher setpoint_raw_attitude_pub_;
   ros::Publisher mount_control_pub_;
-  ros::Publisher serial_num_pub;
+  ros::Publisher serial_num_pub_;
 };
+}  // namespace offboard_control
 
 // 机体坐标系下发送 y, x 速度期望值以及期望偏航角速度至飞控, 用于二维码跟踪
 // (参考于: https://docs.px4.io/master/en/flight_modes/offboard.html).
 // 在 ROS 机体坐标系下:
 // pos_setpoint.velocity.y+ 飞机向前飞,
 // pos_setpoint.velocity.x+ 飞机向右飞
-void OffboardControl::send_body_velyz_setpoint(const Eigen::Vector3d& vel_sp,
-                                               float yaw_sp) {
+void offboard_control::OffboardControl::send_body_velyz_setpoint(
+    const Eigen::Vector3d& vel_sp, float yaw_sp) {
   mavros_msgs::PositionTarget pos_setpoint;
   // Bitmask toindicate which dimensions should be ignored (
   // 1 means ignore, 0 means not ignore)
@@ -95,8 +98,8 @@ void OffboardControl::send_body_velyz_setpoint(const Eigen::Vector3d& vel_sp,
 
 // 机体坐标系下发送 x, y, z 速度期望值以及期望偏航角速度至飞控 (参考于:
 // https://docs.px4.io/master/en/flight_modes/offboard.html)
-void OffboardControl::send_body_velxyz_setpoint(const Eigen::Vector3d& vel_sp,
-                                                float yaw_sp) {
+void offboard_control::OffboardControl::send_body_velxyz_setpoint(
+    const Eigen::Vector3d& vel_sp, float yaw_sp) {
   mavros_msgs::PositionTarget pos_setpoint;
   // Bitmask toindicate which dimensions should be ignored (
   // 1 means ignore, 0 means not ignore)
@@ -117,8 +120,8 @@ void OffboardControl::send_body_velxyz_setpoint(const Eigen::Vector3d& vel_sp,
 }
 
 // local frame 本地坐标系下发送 x, y, z 速度期望值以及期望偏航角速度至飞控
-void OffboardControl::send_velxyz_setpoint(const Eigen::Vector3d& vel_sp,
-                                           float yaw_sp) {
+void offboard_control::OffboardControl::send_velxyz_setpoint(
+    const Eigen::Vector3d& vel_sp, float yaw_sp) {
   mavros_msgs::PositionTarget pos_setpoint;
   // Bitmask toindicate which dimensions should be ignored (
   // 1 means ignore, 0 means not ignore)
@@ -139,7 +142,7 @@ void OffboardControl::send_velxyz_setpoint(const Eigen::Vector3d& vel_sp,
 }
 
 // 机体坐标系下发送 x, y 速度期望值以及高度 z 期望值和期望偏航角速度至飞控
-void OffboardControl::send_body_velxy_posz_yaw_setpoint(
+void offboard_control::OffboardControl::send_body_velxy_posz_yaw_setpoint(
     const Eigen::Vector3d& vel_sp, float desire_z, float yaw_sp) {
   mavros_msgs::PositionTarget pos_setpoint;
   // Bitmask toindicate which dimensions should be ignored (
@@ -161,7 +164,7 @@ void OffboardControl::send_body_velxy_posz_yaw_setpoint(
 }
 
 // 机体坐标系下发送 x, y 速度期望值以及高度 z 期望值至飞控 (输入: 期望 x, y, z)
-void OffboardControl::send_body_velxy_posz_setpoint(
+void offboard_control::OffboardControl::send_body_velxy_posz_setpoint(
     const Eigen::Vector3d& vel_sp, float desire_z) {
   mavros_msgs::PositionTarget pos_setpoint;
   // Bitmask toindicate which dimensions should be ignored (
@@ -183,8 +186,8 @@ void OffboardControl::send_body_velxy_posz_setpoint(
 }
 
 // 本地坐标系发送 x, y 速度期望值以及高度 z 期望值至飞控 (输入: 期望 x, y, z)
-void OffboardControl::send_velxy_posz_setpoint(const Eigen::Vector3d& vel_sp,
-                                               float desire_z) {
+void offboard_control::OffboardControl::send_velxy_posz_setpoint(
+    const Eigen::Vector3d& vel_sp, float desire_z) {
   mavros_msgs::PositionTarget pos_setpoint;
   // Bitmask toindicate which dimensions should be ignored (
   // 1 means ignore, 0 means not ignore)
@@ -205,8 +208,8 @@ void OffboardControl::send_velxy_posz_setpoint(const Eigen::Vector3d& vel_sp,
 }
 
 // 发送位置期望值至飞控 (输入: 期望 x, y, z, yaw)
-void OffboardControl::send_pos_setpoint(const Eigen::Vector3d& pos_sp,
-                                        float yaw_sp) {
+void offboard_control::OffboardControl::send_pos_setpoint(
+    const Eigen::Vector3d& pos_sp, float yaw_sp) {
   mavros_msgs::PositionTarget pos_setpoint;
   // Bitmask toindicate which dimensions should be ignored (
   // 1 means ignore, 0 means not ignore)
@@ -227,7 +230,8 @@ void OffboardControl::send_pos_setpoint(const Eigen::Vector3d& pos_sp,
 }
 
 // 通过 /mavros/setpoint_position/local 这个 topic 发布位置控制至飞控
-void OffboardControl::send_local_pos_setpoint(const Eigen::Vector3d& pos_sp) {
+void offboard_control::OffboardControl::send_local_pos_setpoint(
+    const Eigen::Vector3d& pos_sp) {
   geometry_msgs::PoseStamped pos_target;
   pos_target.pose.position.x = pos_sp[0];
   pos_target.pose.position.y = pos_sp[1];
@@ -236,7 +240,7 @@ void OffboardControl::send_local_pos_setpoint(const Eigen::Vector3d& pos_sp) {
 }
 
 // 发送底层至飞控 (输入: Mx, My, Mz, 期望推力)
-void OffboardControl::send_actuator_setpoint(
+void offboard_control::OffboardControl::send_actuator_setpoint(
     const Eigen::Vector4d& actuator_sp) {
   mavros_msgs::ActuatorControl actuator_setpoint;
 
@@ -255,7 +259,7 @@ void OffboardControl::send_actuator_setpoint(
 
 // 发送角度期望值至飞控 (输入: 期望角度欧拉角, 期望推力)
 // 期望的是角度值 NED 坐标系, 而不是弧度值
-void OffboardControl::send_attitude_setpoint(
+void offboard_control::OffboardControl::send_attitude_setpoint(
     const Eigen::Vector3d& _AttitudeReference, float thrust_sp) {
   mavros_msgs::AttitudeTarget att_setpoint;
   Eigen::Vector3d temp_att;
@@ -291,7 +295,7 @@ void OffboardControl::send_attitude_setpoint(
 }
 
 // 发送角速度期望值至飞控 (输入: 期望角速度, 期望推力)
-void OffboardControl::send_attitude_rate_setpoint(
+void offboard_control::OffboardControl::send_attitude_rate_setpoint(
     const Eigen::Vector3d& attitude_rate_sp, float thrust_sp) {
   mavros_msgs::AttitudeTarget att_setpoint;
 
@@ -313,7 +317,7 @@ void OffboardControl::send_attitude_rate_setpoint(
   setpoint_raw_attitude_pub_.publish(att_setpoint);
 }
 
-void OffboardControl::send_mount_control_command(
+void offboard_control::OffboardControl::send_mount_control_command(
     const Eigen::Vector3d& mount_sp) {
   mavros_msgs::MountControl mount_setpoint;
   mount_setpoint.mode = 2;
@@ -324,10 +328,10 @@ void OffboardControl::send_mount_control_command(
   mount_control_pub_.publish(mount_setpoint);
 }
 
-void OffboardControl::send_serial_num(uint8_t num) {
+void offboard_control::OffboardControl::send_serial_num(uint8_t num) {
   std_msgs::UInt8 A;
   A.data = num;
-  serial_num_pub.publish(A);
+  serial_num_pub_.publish(A);
 }
 
 #endif  // OFFBOARD_CONTROL_H

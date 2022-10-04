@@ -4,8 +4,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 // 无符号单字节整型数据, 这里代表的是投放的顺序, 初始化为 5.
 // 1, 2, 3 代表 1 号, 2 号, 3号投放. 4代表打开所有舵机. 5 没有意义.
 uint8_t throw_n = 5;
@@ -21,10 +19,10 @@ void SerialCallback(const std_msgs::UInt8& msg) {
   if (throw_n > 3) {
     throw_n = 6;
   }
-  cout << static_cast<int>(throw_n) << "号投放" << endl;
+  std::cout << static_cast<int>(throw_n) << "号投放" << std::endl;
 }
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "serial_port");
+  ros::init(argc, argv, "uav");
   // 创建句柄 (虽然后面没用到这个句柄, 但如果不创建, 运行时进程会出错)
   ros::NodeHandle n;
   // 创建一个 Serial 类, 实例化为 sp
@@ -40,11 +38,11 @@ int main(int argc, char** argv) {
   int Baudrate;
   // 将串口名称定义为 throw_serial_port, 可以通过 launch 文件进行更改, 默认为
   // /dev/ttyUSB0
-  n.param<std::string>("test_node/throw_serial_port", throw_serial_port,
+  n.param<std::string>("uav_node/throw_serial_port", throw_serial_port,
                        "/dev/ttyUSB0");
 
   // 将波特率参数定义为 Baudrate, 可以通过 launch 文件进行更改. 默认为 9600.
-  n.param<int>("test_node/Baudrate", Baudrate, 9600);
+  n.param<int>("uav_node/Baudrate", Baudrate, 9600);
 
   sp.setPort(throw_serial_port);
   // 设置串口通信的波特率
@@ -65,8 +63,8 @@ int main(int argc, char** argv) {
     // 这里将串口名称和波特率打印出来,
     // 在 ROS 中将 launch 文件可以修改的参数引出是很好的习惯,
     // 因为可以看到是否更改成功, 在 debug 时有很大的作用
-    cout << "throw_serial_port:" << throw_serial_port << endl;
-    cout << "Baudrate:" << Baudrate << endl;
+    std::cout << "throw_serial_port:" << throw_serial_port << std::endl;
+    std::cout << "Baudrate:" << Baudrate << std::endl;
   } else {
     return -1;
   }

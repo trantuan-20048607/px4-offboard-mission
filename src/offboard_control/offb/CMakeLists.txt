@@ -49,12 +49,12 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(monitor_node src/monitor.cpp)
-add_dependencies(monitor_node ${catkin_EXPORTED_TARGETS} offb_msgs_gencpp)
-target_link_libraries(monitor_node ${catkin_LIBRARIES})
+add_executable(state_monitor_node src/state_monitor.cpp)
+add_dependencies(state_monitor_node ${catkin_EXPORTED_TARGETS} offb_msgs_gencpp)
+target_link_libraries(state_monitor_node ${catkin_LIBRARIES})
 
-add_executable(set_mode_node src/set_mode.cpp)
-target_link_libraries(set_mode_node ${catkin_LIBRARIES})
+add_executable(mode_control_node src/mode_control.cpp)
+target_link_libraries(mode_control_node ${catkin_LIBRARIES})
 
 add_executable(send_info_node src/send_info.cpp)
 target_link_libraries(send_info_node ${catkin_LIBRARIES})
@@ -62,8 +62,8 @@ target_link_libraries(send_info_node ${catkin_LIBRARIES})
 add_executable(com_node src/com.cpp)
 target_link_libraries(com_node ${catkin_LIBRARIES})
 
-add_executable(test_node src/test.cpp)
-target_link_libraries(test_node ${catkin_LIBRARIES})
+add_executable(uav_node src/uav.cpp)
+target_link_libraries(uav_node ${catkin_LIBRARIES})
 
 add_executable(servo_control_node src/servo_control.cpp)
 target_link_libraries(servo_control_node ${catkin_LIBRARIES})
@@ -79,7 +79,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 ## Mark executables and/or libraries for installation
 install(
-  TARGETS  # offb_node monitor_node set_mode_node
+  TARGETS  # offb_node state_monitor_node mode_control_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

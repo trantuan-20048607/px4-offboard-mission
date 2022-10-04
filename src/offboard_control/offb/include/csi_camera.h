@@ -1,8 +1,9 @@
 #ifndef CSI_CAMERA_H
 #define CSI_CAMERA_H
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/videoio.hpp>
 
+namespace csi_camera {
 inline std::string gstreamer_pipeline(int capture_width, int capture_height,
                                       int display_width, int display_height,
                                       int framerate, int flip_method) {
@@ -17,11 +18,10 @@ inline std::string gstreamer_pipeline(int capture_width, int capture_height,
          "format=(string)BGR ! appsink";
 }
 
-class CSICamera {
- public:
-  CSICamera() {
-  }
- private:
-};
+inline cv::VideoCapture open_camera(const std::string &pipeline) {
+  return {pipeline, cv::CAP_GSTREAMER};
+}
+
+}  // namespace csi_camera
 
 #endif  // CSI_CAMERA_H

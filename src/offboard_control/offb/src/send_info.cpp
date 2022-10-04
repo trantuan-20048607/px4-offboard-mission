@@ -27,21 +27,21 @@ int main(int argc, char **argv) {
       nh.subscribe<geometry_msgs::PoseStamped>  //定义订阅者,
                                                 //订阅无人机当前的位置
       ("/mavros/local_position/pose", 10, pos_cb);
-  OffboardControl Offb_;
+  offboard_control::OffboardControl offb;
   while (ros::ok() && !current_state.connected) {
-    Offb_.send_velxyz_setpoint(vel_pos, 0);
+    offb.send_velxyz_setpoint(vel_pos, 0);
     ros::spinOnce();
     rate.sleep();
   }
   while (ros::ok()) {
-    // Offb_.send_pos_setpoint(pos, 0);
+    // offb.send_pos_setpoint(pos, 0);
     if (current_state.armed && (current_state.mode == "OFFBOARD")) {
       //
     } else {
-      Offb_.send_velxyz_setpoint(vel_pos, 0);
+      offb.send_velxyz_setpoint(vel_pos, 0);
     }
     if ((ros::Time::now() - last_record) > ros::Duration(3.0)) {
-      ROS_INFO("working.......");
+      ROS_INFO("Working...");
       last_record = ros::Time::now();
     }
     ros::spinOnce();

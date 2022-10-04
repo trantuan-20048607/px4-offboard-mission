@@ -3,39 +3,39 @@
 
 #include "offboard_control.h"
 
-using namespace std;
-
 int main(int argc, char** argv) {
   uint8_t num;
   ros::init(argc, argv, "servo_control");
   ros::NodeHandle nh;
-  OffboardControl Offb_;
+  offboard_control::OffboardControl offb;
   while (ros::ok()) {
     switch (num) {
       case 0:
-        cout << ">>>>>>>>>>>>>>>>>>>-------<<<<<<<<<<<<<<<<<<<<" << endl;
-        cout << "input the num: 1 for servo_1, 2 for servo_2, 3 for servo_3, 6 "
-                "for all servo"
-             << endl;
-        cin >> num;
+        std::cout << "------------------------------------------------"
+                  << std::endl;
+        std::cout << "Input: 1 for servo_1, 2 for servo_2, 3 for servo_3, 6 "
+                     "for all servos."
+                  << std::endl;
+        std::cin >> num;
+        std::cin.get();
       case 1:
-        Offb_.send_serial_num(num);
-        cout << "成功发送指令" << endl;
+        offb.send_serial_num(num);
+        std::cout << "成功发送指令" << std::endl;
         num = 0;
         break;
       case 2:
-        Offb_.send_serial_num(num);
-        cout << "成功发送指令" << endl;
+        offb.send_serial_num(num);
+        std::cout << "成功发送指令" << std::endl;
         num = 0;
         break;
       case 3:
-        Offb_.send_serial_num(num);
-        cout << "成功发送指令" << endl;
+        offb.send_serial_num(num);
+        std::cout << "成功发送指令" << std::endl;
         num = 0;
         break;
       case 6:
-        Offb_.send_serial_num(num);
-        cout << "成功发送指令" << endl;
+        offb.send_serial_num(num);
+        std::cout << "成功发送指令" << std::endl;
         num = 0;
         break;
       default:
