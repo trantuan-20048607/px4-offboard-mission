@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv) {
   uint8_t num;
-  ros::init(argc, argv, "servo_control");
+  ros::init(argc, argv, "station_servo_control");
   ros::NodeHandle nh;
   offboard_control::OffboardControl offb;
   while (ros::ok()) {

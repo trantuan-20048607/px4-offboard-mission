@@ -6,7 +6,7 @@
 double desire_z;         // 无人机将一直以这个高度飞行
 double desire_vz = 0.5;  // 无人机以这个速度起飞降落
 int num_fly;             // 无人机的航点个数
-double change;
+double delta_xyz;
 double fly_point[100][3];  // 存储无人机的航点
 Eigen::Vector3d start_point, next_point, end_point;
 Eigen::Vector3d start_vel, landing_vel, slow_vel;
@@ -36,9 +36,9 @@ void add_target(int i) {
   for (int j = 0; j < 3; j++) {
     if (abs(next_point[j] - fly_point[i + 1][j]) > 0.3) {
       if (next_point[j] > fly_point[i + 1][j]) {
-        next_point[j] -= change;
+        next_point[j] -= delta_xyz;
       } else {
-        next_point[j] += change;
+        next_point[j] += delta_xyz;
       }
     } else {
       next_point[j] = fly_point[i + 1][j];
@@ -66,7 +66,7 @@ void fly_high(int i, double desire_z) {
     if (state_drone.armed) {
       offb.send_local_pos_setpoint(high_pos);
       if (high_pos[2] < desire_z + 0.1) {
-        high_pos[2] += change;
+        high_pos[2] += delta_xyz;
       }
     } else {
       std::cout << "无人机已上锁" << std::endl;
@@ -98,7 +98,7 @@ void landing() {
   while (abs(vel_drone[2]) > 0.1 || pos_drone[2] > 0.1) {
     offb.send_local_pos_setpoint(land_pos);
     if (land_pos[2] > -0.5) {
-      land_pos[2] -= change;
+      land_pos[2] -= delta_xyz;
     } else {
       land_pos[2] = -0.5;
     }
@@ -136,7 +136,7 @@ void unload(int i) {
 }
 
 int main(int argc, char **argv) {
-  ros::init(argc, argv, "com");
+  ros::init(argc, argv, "station_fly_control");
   ros::NodeHandle nh;
   ros::ServiceClient arming_client =
       nh.serviceClient<mavros_msgs::CommandBool>  // 定义服务, 用来解锁无人机
@@ -156,10 +156,10 @@ int main(int argc, char **argv) {
   offb_set_mode.request.custom_mode = "AUTO.LAND";  // 更改飞行模式为手动
   arm_cmd.request.value = false;                    // 对飞机上锁
   offboard_control::OffboardControl offb;
-  nh.getParam("com_node/desire_z", desire_z);
-  nh.getParam("com_node/change", change);
+  nh.getParam("station_fly_control_node/desire_z", desire_z);
+  nh.getParam("station_fly_control_node/delta_xyz", delta_xyz);
   // ros::param::get("~desire_z", desire_z);
-  // ros::param::get("~change", change);
+  // ros::param::get("~delta_xyz", delta_xyz);
   while (!state_drone.connected) {
     ros::spinOnce();
     rate.sleep();

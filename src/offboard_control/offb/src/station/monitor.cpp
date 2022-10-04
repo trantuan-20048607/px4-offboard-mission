@@ -3,7 +3,7 @@
 int main(int argc, char **argv) {
   constexpr int obj_width = 16;
   int header = 1;
-  ros::init(argc, argv, "state_monitor");
+  ros::init(argc, argv, "station_monitor");
   ros::NodeHandle nh;
   ros::Rate rate(20.0);
   state_from_mavros::StateFromMavros state;

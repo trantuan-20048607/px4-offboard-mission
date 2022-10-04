@@ -39,6 +39,7 @@ class OffboardControl {
             "/mavros/setpoint_raw/attitude", 10);
     serial_num_pub_ = offboard_nh_.advertise<std_msgs::UInt8>("/servo", 1);
   }
+
   void send_velxy_posz_setpoint(const Eigen::Vector3d& vel_sp, float desire_z);
   void send_pos_setpoint(const Eigen::Vector3d& pos_sp, float yaw_sp);
   void send_velxyz_setpoint(const Eigen::Vector3d& vel_sp, float yaw_sp);
@@ -119,7 +120,7 @@ void offboard_control::OffboardControl::send_body_velxyz_setpoint(
   mavros_setpoint_pos_pub_.publish(pos_setpoint);
 }
 
-// local frame 本地坐标系下发送 x, y, z 速度期望值以及期望偏航角速度至飞控
+// 本地坐标系下发送 x, y, z 速度期望值以及期望偏航角速度至飞控
 void offboard_control::OffboardControl::send_velxyz_setpoint(
     const Eigen::Vector3d& vel_sp, float yaw_sp) {
   mavros_msgs::PositionTarget pos_setpoint;
@@ -329,9 +330,9 @@ void offboard_control::OffboardControl::send_mount_control_command(
 }
 
 void offboard_control::OffboardControl::send_serial_num(uint8_t num) {
-  std_msgs::UInt8 A;
-  A.data = num;
-  serial_num_pub_.publish(A);
+  std_msgs::UInt8 msg;
+  msg.data = num;
+  serial_num_pub_.publish(msg);
 }
 
 #endif  // OFFBOARD_CONTROL_H

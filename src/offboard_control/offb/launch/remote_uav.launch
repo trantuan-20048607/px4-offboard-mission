@@ -1,15 +1,15 @@
 <launch>
-	<arg name="Baudrate" type="int" value="9600" />
+	<arg name="baud_rate" type="int" value="9600" />
 	<arg name="throw_serial_port" type="string" value="/dev/arduino" />
 
 	<include file="$(find mavros)/launch/px4.launch" />
 	<include file="$(find realsense2_camera)/launch/rs_t265.launch" />
 	<include file="$(find vision_to_mavros)/launch/t265_tf_to_mavros.launch" />
 
-	<node name="uav_node" pkg="offb" type="uav_node" output="screen">
-		<param name="Baudrate" value="$(arg Baudrate)" />
+	<node name="uav_servo_node" pkg="offb" type="uav_servo_node" output="screen">
+		<param name="baud_rate" value="$(arg baud_rate)" />
 		<param name="throw_serial_port" value="$(arg throw_serial_port)" />
 	</node>
 
-	<node name="vision_node" pkg="offb" type="vision_node" output="screen" launch-prefix="gnome-terminal --window --"></node>
+	<node name="uav_vision_node" pkg="offb" type="uav_vision_node" output="screen" launch-prefix="gnome-terminal --window --"></node>
 </launch>

@@ -11,7 +11,7 @@ mavros_msgs::State current_state;
 void state_cb(const mavros_msgs::State::ConstPtr& msg) { current_state = *msg; }
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "mode_control");
+  ros::init(argc, argv, "station_mode_control");
   ros::NodeHandle nh("~");
 
   // [订阅] 无人机当前状态
@@ -33,12 +33,12 @@ int main(int argc, char** argv) {
 
   ros::Rate rate(10.0);
 
-  int Num_StateMachine = 0;
-  int flag_1;
+  int mode_state = 0;
+  int flag;
 
   while (ros::ok()) {
-    switch (Num_StateMachine) {
-      // input
+    switch (mode_state) {
+      // Input
       case 0:
         std::cout << "------------------------------------------------"
                   << std::endl;
@@ -46,29 +46,27 @@ int main(int argc, char** argv) {
             << "Set mode: 0 for arm, 1 for TAKEOFF, 2 for OFFBOARD, 3 for "
                "LAND, 4 for POSCTL, 5 for MISSION, 6 for LOITER, 7 for disarm."
             << std::endl;
-        std::cin >> flag_1;
+        std::cin >> flag;
         std::cin.get();
 
-        // 1000 降落 也可以指向其他任务
-        if (flag_1 == 0) {
-          Num_StateMachine = 1;
+        if (flag == 0) {
+          mode_state = 1;
           break;
-        } else if (flag_1 == 1) {
-          Num_StateMachine = 2;
+        } else if (flag == 1) {
+          mode_state = 2;
           break;
-        } else if (flag_1 == 2) {
-          Num_StateMachine = 3;
-        }  // 惯性系移动
-        else if (flag_1 == 3) {
-          Num_StateMachine = 4;
-        } else if (flag_1 == 4) {
-          Num_StateMachine = 5;
-        } else if (flag_1 == 5) {
-          Num_StateMachine = 6;
-        } else if (flag_1 == 6) {
-          Num_StateMachine = 7;
-        } else if (flag_1 == 7) {
-          Num_StateMachine = 8;
+        } else if (flag == 2) {
+          mode_state = 3;
+        } else if (flag == 3) {
+          mode_state = 4;
+        } else if (flag == 4) {
+          mode_state = 5;
+        } else if (flag == 5) {
+          mode_state = 6;
+        } else if (flag == 6) {
+          mode_state = 7;
+        } else if (flag == 7) {
+          mode_state = 8;
         }
         break;
 
@@ -79,7 +77,7 @@ int main(int argc, char** argv) {
           arming_client.call(arm_cmd);
           std::cout << "Arming..." << std::endl;
         } else {
-          Num_StateMachine = 0;
+          mode_state = 0;
           std::cout << "Arm succeeded." << std::endl;
         }
         break;
@@ -90,9 +88,8 @@ int main(int argc, char** argv) {
           mode_cmd.request.custom_mode = "AUTO.TAKEOFF";
           set_mode_client.call(mode_cmd);
           std::cout << "Setting to TAKEOFF mode..." << std::endl;
-
         } else {
-          Num_StateMachine = 0;
+          mode_state = 0;
           std::cout << "Set to AUTO.TAKEOFF mode succeeded." << std::endl;
         }
         break;
@@ -103,9 +100,8 @@ int main(int argc, char** argv) {
           mode_cmd.request.custom_mode = "OFFBOARD";
           set_mode_client.call(mode_cmd);
           std::cout << "Setting to OFFBOARD mode..." << std::endl;
-
         } else {
-          Num_StateMachine = 0;
+          mode_state = 0;
           std::cout << "Set to OFFBOARD mode succeeded." << std::endl;
         }
         break;
@@ -116,9 +112,8 @@ int main(int argc, char** argv) {
           mode_cmd.request.custom_mode = "AUTO.LAND";
           set_mode_client.call(mode_cmd);
           std::cout << "Setting to LAND mode..." << std::endl;
-
         } else {
-          Num_StateMachine = 0;
+          mode_state = 0;
           std::cout << "Set to LAND mode succeeded." << std::endl;
         }
         break;
@@ -129,9 +124,8 @@ int main(int argc, char** argv) {
           mode_cmd.request.custom_mode = "POSCTL";
           set_mode_client.call(mode_cmd);
           std::cout << "Setting to POSCTL mode..." << std::endl;
-
         } else {
-          Num_StateMachine = 0;
+          mode_state = 0;
           std::cout << "Set to POSCTL mode succeeded." << std::endl;
         }
         break;
@@ -142,9 +136,8 @@ int main(int argc, char** argv) {
           mode_cmd.request.custom_mode = "AUTO.MISSION";
           set_mode_client.call(mode_cmd);
           std::cout << "Setting to MISSION mode..." << std::endl;
-
         } else {
-          Num_StateMachine = 0;
+          mode_state = 0;
           std::cout << "Set to RTL MISSION succeeded." << std::endl;
         }
         break;
@@ -154,9 +147,8 @@ int main(int argc, char** argv) {
           mode_cmd.request.custom_mode = "AUTO.LOITER";
           set_mode_client.call(mode_cmd);
           std::cout << "Setting to AUTO.LOITER mode..." << std::endl;
-
         } else {
-          Num_StateMachine = 0;
+          mode_state = 0;
           std::cout << "Set to AUTO.LOITER mode succeeded." << std::endl;
         }
         break;
@@ -165,10 +157,9 @@ int main(int argc, char** argv) {
         if (current_state.armed) {
           arm_cmd.request.value = false;
           arming_client.call(arm_cmd);
-          std::cout << "Disarm...." << std::endl;
-
+          std::cout << "Disarming...." << std::endl;
         } else {
-          Num_StateMachine = 0;
+          mode_state = 0;
           std::cout << "Disarm succeeded." << std::endl;
         }
         break;
