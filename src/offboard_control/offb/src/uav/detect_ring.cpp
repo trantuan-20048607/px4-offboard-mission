@@ -1,3 +1,4 @@
+#include <offb_msgs/DetectRing.h>
 #include <ros/ros.h>
 
 #include <opencv2/opencv.hpp>
@@ -68,25 +69,38 @@ cv::Point find_ring_center(const cv::Mat& img) {
   return min_radius_center;
 }
 
+cv::VideoCapture cap;
+
+bool detect_ring_service_cb(offb_msgs::DetectRing::Request& req,
+                            offb_msgs::DetectRing::Response& res) {
+  auto image = cv::Mat();
+  auto ret = cap.read(image);
+  if (ret) {
+    auto ring_center = find_ring_center(image);
+    // TODO 填写坐标系变换内容
+  }
+  return true;
+}
+
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "uav_vision");
+  ros::init(argc, argv, "uav_detect_ring");
   ros::NodeHandle nh;
-  ros::Rate rate(10.0);
+
   auto pipeline = csi_camera::gstreamer_pipeline(capture_width, capture_height,
                                                  display_width, display_height,
                                                  framerate, flip_method);
-  auto cap = csi_camera::open_camera(pipeline);
+  cap = csi_camera::open_camera(pipeline);
   if (!cap.isOpened()) {
     std::cout << "Failed to open camera. Disable all vision functions."
               << std::endl;
-  } else {
-    auto image = cv::Mat();
-    auto ret = cap.read(image);
-    if (ret) {
-      auto ring_center = find_ring_center(image);
-      // TODO 填写坐标系变换内容
-    }
+    ROS_WARN("Failed to open camera. Disable all vision functions.");
+    return 0;
   }
+
+  auto detect_ring_service =
+      nh.advertiseService("detect_ring", detect_ring_service_cb);
+  ros::spin();
+
   cap.release();
   return 0;
 }

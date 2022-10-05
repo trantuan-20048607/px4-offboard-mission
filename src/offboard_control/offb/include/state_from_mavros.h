@@ -22,7 +22,6 @@
 #include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
-#include <offb_msgs/AttitudeReference.h>
 #include <offb_msgs/DroneState.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>

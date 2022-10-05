@@ -18,11 +18,11 @@ void serial_cb(const std_msgs::UInt8& msg) {
   if (throw_n > 3) {
     throw_n = 6;
   }
-  std::cout << static_cast<int>(throw_n) << "号投放" << std::endl;
+  std::cout << "Placed object " << static_cast<int>(throw_n) << "." << std::endl;
 }
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "uav_servo");
+  ros::init(argc, argv, "uav_servo_control");
   ros::NodeHandle nh;
   serial::Serial sp;
   ros::Subscriber sub = nh.subscribe("/servo", 1, &serial_cb);
@@ -31,9 +31,9 @@ int main(int argc, char** argv) {
 
   std::string throw_serial_port;
   int baud_rate;
-  nh.param<std::string>("uav_servo_node/throw_serial_port", throw_serial_port,
+  nh.param<std::string>("uav_servo_control_node/throw_serial_port", throw_serial_port,
                         "/dev/ttyUSB0");
-  nh.param<int>("uav_servo_node/baud_rate", baud_rate, 9600);
+  nh.param<int>("uav_servo_control_node/baud_rate", baud_rate, 9600);
 
   sp.setPort(throw_serial_port);
   sp.setBaudrate(baud_rate);

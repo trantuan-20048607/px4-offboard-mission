@@ -65,11 +65,11 @@ target_link_libraries(station_servo_control_node ${catkin_LIBRARIES})
 add_executable(station_watchdog_node src/station/watchdog.cpp)
 target_link_libraries(station_watchdog_node ${catkin_LIBRARIES})
 
-add_executable(uav_servo_node src/uav/servo.cpp)
-target_link_libraries(uav_servo_node ${catkin_LIBRARIES})
+add_executable(uav_servo_control_node src/uav/servo_control.cpp)
+target_link_libraries(uav_servo_control_node ${catkin_LIBRARIES})
 
-add_executable(uav_vision_node src/uav/vision.cpp)
-target_link_libraries(uav_vision_node ${catkin_LIBRARIES})
+add_executable(uav_detect_ring_node src/uav/detect_ring.cpp)
+target_link_libraries(uav_detect_ring_node ${catkin_LIBRARIES})
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/

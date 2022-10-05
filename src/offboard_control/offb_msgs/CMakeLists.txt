@@ -19,10 +19,15 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS system)
 
 add_message_files(
-  DIRECTORY msgs
+  DIRECTORY msg
   FILES
-  AttitudeReference.msg
   DroneState.msg
+)
+
+add_service_files(
+  DIRECTORY srv
+  FILES
+  DetectRing.srv
 )
 
 generate_messages(
