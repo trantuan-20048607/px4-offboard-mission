@@ -70,11 +70,10 @@ class OffboardControl {
 };
 }  // namespace offboard_control
 
-// 机体坐标系下发送 y, x 速度期望值以及期望偏航角速度至飞控, 用于二维码跟踪
-// (参考于: https://docs.px4.io/master/en/flight_modes/offboard.html).
+// 参考: https://docs.px4.io/master/en/flight_modes/offboard.html
 // 在 ROS 机体坐标系下:
-// pos_setpoint.velocity.y+ 飞机向前飞,
-// pos_setpoint.velocity.x+ 飞机向右飞
+// pos_setpoint.velocity.y > 0 => 飞机向前飞,
+// pos_setpoint.velocity.x > 0 => 飞机向右飞
 void offboard_control::OffboardControl::send_body_velyz_setpoint(
     const Eigen::Vector3d& vel_sp, float yaw_sp) {
   mavros_msgs::PositionTarget pos_setpoint;
@@ -97,8 +96,6 @@ void offboard_control::OffboardControl::send_body_velyz_setpoint(
   mavros_setpoint_pos_pub_.publish(pos_setpoint);
 }
 
-// 机体坐标系下发送 x, y, z 速度期望值以及期望偏航角速度至飞控 (参考于:
-// https://docs.px4.io/master/en/flight_modes/offboard.html)
 void offboard_control::OffboardControl::send_body_velxyz_setpoint(
     const Eigen::Vector3d& vel_sp, float yaw_sp) {
   mavros_msgs::PositionTarget pos_setpoint;
@@ -120,7 +117,6 @@ void offboard_control::OffboardControl::send_body_velxyz_setpoint(
   mavros_setpoint_pos_pub_.publish(pos_setpoint);
 }
 
-// 本地坐标系下发送 x, y, z 速度期望值以及期望偏航角速度至飞控
 void offboard_control::OffboardControl::send_velxyz_setpoint(
     const Eigen::Vector3d& vel_sp, float yaw_sp) {
   mavros_msgs::PositionTarget pos_setpoint;
@@ -142,7 +138,6 @@ void offboard_control::OffboardControl::send_velxyz_setpoint(
   mavros_setpoint_pos_pub_.publish(pos_setpoint);
 }
 
-// 机体坐标系下发送 x, y 速度期望值以及高度 z 期望值和期望偏航角速度至飞控
 void offboard_control::OffboardControl::send_body_velxy_posz_yaw_setpoint(
     const Eigen::Vector3d& vel_sp, float desire_z, float yaw_sp) {
   mavros_msgs::PositionTarget pos_setpoint;
@@ -164,7 +159,6 @@ void offboard_control::OffboardControl::send_body_velxy_posz_yaw_setpoint(
   mavros_setpoint_pos_pub_.publish(pos_setpoint);
 }
 
-// 机体坐标系下发送 x, y 速度期望值以及高度 z 期望值至飞控 (输入: 期望 x, y, z)
 void offboard_control::OffboardControl::send_body_velxy_posz_setpoint(
     const Eigen::Vector3d& vel_sp, float desire_z) {
   mavros_msgs::PositionTarget pos_setpoint;
@@ -186,7 +180,6 @@ void offboard_control::OffboardControl::send_body_velxy_posz_setpoint(
   mavros_setpoint_pos_pub_.publish(pos_setpoint);
 }
 
-// 本地坐标系发送 x, y 速度期望值以及高度 z 期望值至飞控 (输入: 期望 x, y, z)
 void offboard_control::OffboardControl::send_velxy_posz_setpoint(
     const Eigen::Vector3d& vel_sp, float desire_z) {
   mavros_msgs::PositionTarget pos_setpoint;
@@ -208,7 +201,6 @@ void offboard_control::OffboardControl::send_velxy_posz_setpoint(
   mavros_setpoint_pos_pub_.publish(pos_setpoint);
 }
 
-// 发送位置期望值至飞控 (输入: 期望 x, y, z, yaw)
 void offboard_control::OffboardControl::send_pos_setpoint(
     const Eigen::Vector3d& pos_sp, float yaw_sp) {
   mavros_msgs::PositionTarget pos_setpoint;
@@ -230,7 +222,6 @@ void offboard_control::OffboardControl::send_pos_setpoint(
   mavros_setpoint_pos_pub_.publish(pos_setpoint);
 }
 
-// 通过 /mavros/setpoint_position/local 这个 topic 发布位置控制至飞控
 void offboard_control::OffboardControl::send_local_pos_setpoint(
     const Eigen::Vector3d& pos_sp) {
   geometry_msgs::PoseStamped pos_target;
@@ -240,7 +231,6 @@ void offboard_control::OffboardControl::send_local_pos_setpoint(
   mavros_setpoint_local_pos_pub_.publish(pos_target);
 }
 
-// 发送底层至飞控 (输入: Mx, My, Mz, 期望推力)
 void offboard_control::OffboardControl::send_actuator_setpoint(
     const Eigen::Vector4d& actuator_sp) {
   mavros_msgs::ActuatorControl actuator_setpoint;
@@ -258,21 +248,20 @@ void offboard_control::OffboardControl::send_actuator_setpoint(
   actuator_setpoint_pub_.publish(actuator_setpoint);
 }
 
-// 发送角度期望值至飞控 (输入: 期望角度欧拉角, 期望推力)
-// 期望的是角度值 NED 坐标系, 而不是弧度值
 void offboard_control::OffboardControl::send_attitude_setpoint(
     const Eigen::Vector3d& _AttitudeReference, float thrust_sp) {
   mavros_msgs::AttitudeTarget att_setpoint;
   Eigen::Vector3d temp_att;
   tf2::Quaternion quat_obj;
 
-  // 角度值转成弧度值
+  // 角度转弧度
   temp_att[0] = _AttitudeReference[0] / (180 / M_PI);
   temp_att[1] = _AttitudeReference[1] / (180 / M_PI);
   temp_att[2] = (90 - _AttitudeReference[2]) / (180 / M_PI);
   if (temp_att[2] < 0) {
     temp_att[2] = 2 * M_PI + temp_att[2];
   }
+
   // 欧拉角转四元数
   quat_obj.setRPY(temp_att[0], temp_att[1], temp_att[2]);
 
@@ -295,7 +284,6 @@ void offboard_control::OffboardControl::send_attitude_setpoint(
   setpoint_raw_attitude_pub_.publish(att_setpoint);
 }
 
-// 发送角速度期望值至飞控 (输入: 期望角速度, 期望推力)
 void offboard_control::OffboardControl::send_attitude_rate_setpoint(
     const Eigen::Vector3d& attitude_rate_sp, float thrust_sp) {
   mavros_msgs::AttitudeTarget att_setpoint;

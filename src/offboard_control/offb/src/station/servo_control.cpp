@@ -10,37 +10,36 @@ int main(int argc, char** argv) {
   offboard_control::OffboardControl offb;
   while (ros::ok()) {
     switch (num) {
-      case 0:
+      // 用户输入
+      case 0: {
         std::cout << "------------------------------------------------"
                   << std::endl;
-        std::cout << "Input: 1 for servo_1, 2 for servo_2, 3 for servo_3, 6 "
-                     "for all servos."
+        std::cout << "Control servos: 1 for servo_1, 2 for servo_2, 3 for "
+                     "servo_3, 6 for all servos."
                   << std::endl;
         std::cin >> num;
         std::cin.get();
+      } break;
+
+      // 发送指令
       case 1:
-        offb.send_serial_num(num);
-        std::cout << "成功发送指令" << std::endl;
-        num = 0;
-        break;
       case 2:
-        offb.send_serial_num(num);
-        std::cout << "成功发送指令" << std::endl;
-        num = 0;
-        break;
       case 3:
+      case 6: {
         offb.send_serial_num(num);
-        std::cout << "成功发送指令" << std::endl;
+        std::cout << "Servo serial command sent successfully." << std::endl;
+        std::stringstream info_ss;
+        info_ss << "[SERVO CONTROL] Send servo serial command " << num
+                << " successfully.";
+        ROS_INFO(info_ss.str().c_str());
         num = 0;
-        break;
-      case 6:
-        offb.send_serial_num(num);
-        std::cout << "成功发送指令" << std::endl;
+      } break;
+
+      // 无效状态
+      default: {
+        std::cout << "Invalid command." << std::endl;
         num = 0;
-        break;
-      default:
-        num = 0;
-        break;
+      } break;
     }
   }
   return 0;

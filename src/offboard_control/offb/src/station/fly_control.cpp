@@ -3,11 +3,12 @@
 
 #include "offboard_control.h"
 
-double desire_z;         // 无人机将一直以这个高度飞行
-double desire_vz = 0.5;  // 无人机以这个速度起飞降落
-int num_fly;             // 无人机的航点个数
-double delta_xyz;
-double fly_point[100][3];  // 存储无人机的航点
+double desire_z;                        // 巡航高度
+auto num_waypoints = 0;                 // 航点个数
+constexpr auto max_num_waypoints = 92;  // 最大航点个数
+double delta_xyz;                       // 移动步长
+double waypoint[96][3];                 // 航点
+
 Eigen::Vector3d start_point, next_point, end_point;
 Eigen::Vector3d start_vel, landing_vel, slow_vel;
 Eigen::Vector3d pos_drone, vel_drone;
@@ -31,179 +32,205 @@ void state_cb(const mavros_msgs::State::ConstPtr &msg) {
   state_drone.mode = msg->mode;
 }
 
-// 改变下一个时刻向飞控发送的位置信息
 void add_target(int i) {
-  for (int j = 0; j < 3; j++) {
-    if (abs(next_point[j] - fly_point[i + 1][j]) > 0.3) {
-      if (next_point[j] > fly_point[i + 1][j]) {
+  for (int j = 0; j < 3; ++j) {
+    if (fabs(next_point[j] - waypoint[i + 1][j]) > 0.2) {
+      if (next_point[j] > waypoint[i + 1][j])
         next_point[j] -= delta_xyz;
-      } else {
+      else
         next_point[j] += delta_xyz;
-      }
     } else {
-      next_point[j] = fly_point[i + 1][j];
+      next_point[j] = waypoint[i + 1][j];
     }
   }
 }
 
-// 判断无人机是否到达目标点
-int not_arrived(int i) {
-  double x_mis = abs(pos_drone[0] - fly_point[i + 1][0]),
-         y_mis = abs(pos_drone[1] - fly_point[i + 1][1]),
-         z_mis = abs(pos_drone[2] - fly_point[i + 1][2]);
-  return (x_mis <= 0.15 && y_mis <= 0.15 && z_mis <= 0.15 ? 0 : 1);
+bool arrived(int i) {
+  return fabs(pos_drone[0] - waypoint[i + 1][0]) <= 0.1 &&
+         fabs(pos_drone[1] - waypoint[i + 1][1]) <= 0.1 &&
+         fabs(pos_drone[2] - waypoint[i + 1][2]) <= 0.1;
 }
 
 void fly_high(int i, double desire_z) {
   offboard_control::OffboardControl offb;
   ros::Rate rate(20.0);
-  std::cout << "正在上升中" << std::endl;
+  std::cout << "Climbing..." << std::endl;
   Eigen::Vector3d high_pos;
+
   high_pos[0] = pos_drone[0];
   high_pos[1] = pos_drone[1];
-  high_pos[2] = 0.3;
-  while (abs(pos_drone[2] - desire_z) > 0.05) {
+  high_pos[2] = 0.2;  // 最小高度, 缓慢提升
+
+  auto show_warning = true;
+  while (fabs(pos_drone[2] - desire_z) > 0.05) {
     if (state_drone.armed) {
+      show_warning = true;
       offb.send_local_pos_setpoint(high_pos);
-      if (high_pos[2] < desire_z + 0.1) {
-        high_pos[2] += delta_xyz;
-      }
+      if (high_pos[2] < desire_z) high_pos[2] += delta_xyz;
     } else {
-      std::cout << "无人机已上锁" << std::endl;
+      std::cout << "Drone is disarmed." << std::endl;
+      show_warning = false;
     }
     ros::spinOnce();
     rate.sleep();
   }
-  std::cout << "已经到达期望高度" << std::endl;
+
+  std::cout << "Reached desired altitude." << std::endl;
 }
 
 void fly_to(int i) {
   offboard_control::OffboardControl offb;
   ros::Rate rate(20.0);
-  std::cout << "正在飞往下一个目标点" << std::endl;
-  while (not_arrived(i)) {
+
+  std::cout << "Flying to the next waypoint..." << std::endl;
+  // 持续发送目标点
+  while (!arrived(i)) {
     add_target(i);
     offb.send_local_pos_setpoint(next_point);
     ros::spinOnce();
     rate.sleep();
   }
-  std::cout << "已经到达目标点上方" << std::endl;
+  std::cout << "Reached above the next waypoint." << std::endl;
 }
 
-void landing() {
+void land() {
   offboard_control::OffboardControl offb;
   ros::Rate rate(20.0);
-  Eigen::Vector3d land_pos = end_point;
-  std::cout << "准备降落" << std::endl;
-  while (abs(vel_drone[2]) > 0.1 || pos_drone[2] > 0.1) {
+  auto land_pos = end_point;
+
+  std::cout << "Landing..." << std::endl;
+  while (fabs(vel_drone[2]) > 0.1 || pos_drone[2] > 0.1) {
     offb.send_local_pos_setpoint(land_pos);
-    if (land_pos[2] > -0.5) {
+    if (land_pos[2] > -0.2)
       land_pos[2] -= delta_xyz;
-    } else {
-      land_pos[2] = -0.5;
-    }
+    else
+      land_pos[2] = -0.2;
     ros::spinOnce();
     rate.sleep();
   }
-  std::cout << "降落成功, 怠速旋转" << std::endl;
+  std::cout << "Landed and IDLE." << std::endl;
 }
 
 void unload(int i) {
   Eigen::Vector3d land_pos;
   ros::Rate rate(20.0);
+
   while (pos_drone[2] > 0.2) {
     ros::spinOnce();
     rate.sleep();
   }
+
   land_pos[0] = pos_drone[0];
   land_pos[1] = pos_drone[1];
-  land_pos[2] = -0.5;
+  land_pos[2] = -0.2;
   offboard_control::OffboardControl offb;
   ros::Time last_request = ros::Time::now();
-  while (ros::Time::now() - last_request < ros::Duration(3.0)) {
+  while (ros::Time::now() - last_request < ros::Duration(5.0)) {
     ros::spinOnce();
     rate.sleep();
     offb.send_pos_setpoint(land_pos, 0);
   }
   offb.send_serial_num(i);
   last_request = ros::Time::now();
-  while (ros::Time::now() - last_request < ros::Duration(2.0)) {
+  while (ros::Time::now() - last_request < ros::Duration(5.0)) {
     ros::spinOnce();
     rate.sleep();
     offb.send_pos_setpoint(land_pos, 0);
   }
-  std::cout << "投放完毕" << std::endl;
+  std::cout << "Item has been placed." << std::endl;
 }
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "station_fly_control");
   ros::NodeHandle nh;
-  ros::ServiceClient arming_client =
-      nh.serviceClient<mavros_msgs::CommandBool>  // 定义服务, 用来解锁无人机
-      ("mavros/cmd/arming");
-  ros::ServiceClient set_mode_client =
-      nh.serviceClient<mavros_msgs::SetMode>  // 定义服务, 用来改变无人机的模式
-      ("mavros/set_mode");
-  ros::Subscriber position_sub = nh.subscribe<geometry_msgs::PoseStamped>(
+
+  auto arming_client =
+      nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
+  auto set_mode_client =
+      nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+
+  auto position_sub = nh.subscribe<geometry_msgs::PoseStamped>(
       "/mavros/local_position/pose", 10, pos_cb);
-  ros::Subscriber velocity_sub = nh.subscribe<geometry_msgs::TwistStamped>(
+  auto velocity_sub = nh.subscribe<geometry_msgs::TwistStamped>(
       "/mavros/local_position/velocity_local", 10, vel_cb);
-  ros::Subscriber state_sub =
+  auto state_sub =
       nh.subscribe<mavros_msgs::State>("/mavros/state", 10, state_cb);
+
   ros::Rate rate(20.0);
-  mavros_msgs::SetMode offb_set_mode;  // 定义改变模式的变量
-  mavros_msgs::CommandBool arm_cmd;    // 定义解锁飞机的变量
-  offb_set_mode.request.custom_mode = "AUTO.LAND";  // 更改飞行模式为手动
-  arm_cmd.request.value = false;                    // 对飞机上锁
+  mavros_msgs::SetMode offb_set_mode;
+  mavros_msgs::CommandBool arm_cmd;
+  offb_set_mode.request.custom_mode = "AUTO.LAND";
+  arm_cmd.request.value = false;
+
   offboard_control::OffboardControl offb;
   nh.getParam("station_fly_control_node/desire_z", desire_z);
   nh.getParam("station_fly_control_node/delta_xyz", delta_xyz);
-  // ros::param::get("~desire_z", desire_z);
-  // ros::param::get("~delta_xyz", delta_xyz);
+
+  // 等待连接
   while (!state_drone.connected) {
     ros::spinOnce();
     rate.sleep();
   }
-  std::cout << "无人机的巡航高度是: " << desire_z << std::endl;
-  std::cout << "请输入航点个数: " << std::endl;
-  std::cin >> num_fly;
-  std::cin.get();
-  for (int i = 1; i <= num_fly; i++) {
-    std::cout << "请输入第" << i << "个航点: ";
-    std::cin >> fly_point[i][0] >> fly_point[i][1] >> fly_point[i][2];
-    fly_point[i][2] = desire_z;
+
+  std::cout << "Current cruising altitude: " << desire_z << std::endl;
+
+  // 输入航点
+  for (; num_waypoints > 0 && num_waypoints <= max_num_waypoints;) {
+    std::cout << "Enter the num of waypoints: ";
+    std::cin >> num_waypoints;
+    std::cin.get();
   }
-  fly_point[0][2] = desire_z;
-  fly_point[num_fly + 1][2] = desire_z;
-  std::cout << "等待OFFBOARD模式以及解锁飞机" << std::endl;
+
+  for (auto i = 1; i <= num_waypoints; ++i) {
+    std::cout << "Enter the waypoint " << i << " (x, y, " << desire_z
+              << "), separate by spaces: ";
+    std::cin >> waypoint[i][0] >> waypoint[i][1];
+    std::cin.get();
+    waypoint[i][2] = desire_z;
+  }
+  waypoint[0][2] = desire_z;
+  waypoint[num_waypoints + 1][2] = desire_z;
+
+  // 等待进入 OFFBOARD 模式并解锁
+  std::cout << "Waiting for setting to OFFBOARD mode and arming." << std::endl;
   while (state_drone.mode != "OFFBOARD" || !state_drone.armed) {
     ros::spinOnce();
     rate.sleep();
   }
-  for (int i = 0; i < num_fly + 1; i++) {
-    start_point[0] = fly_point[i][0];
-    start_point[1] = fly_point[i][1];
-    start_point[2] = fly_point[i][2];
-    end_point[0] = fly_point[i + 1][0];
-    end_point[1] = fly_point[i + 1][1];
-    end_point[2] = fly_point[i + 1][2];
+
+  // 依次前往各个航点并执行对应任务
+  for (auto i = 0; i < num_waypoints + 1; ++i) {
+    start_point[0] = waypoint[i][0];
+    start_point[1] = waypoint[i][1];
+    start_point[2] = waypoint[i][2];
+    end_point[0] = waypoint[i + 1][0];
+    end_point[1] = waypoint[i + 1][1];
+    end_point[2] = waypoint[i + 1][2];
     next_point[0] = start_point[0];
     next_point[1] = start_point[1];
     next_point[2] = desire_z;
+    std::cout << "Departed to the waypoint " << i << "." << std::endl;
     fly_high(i, desire_z);
     fly_to(i);
-    landing();
+    land();
+    std::cout << "Arrived at the waypoint " << i << "." << std::endl;
     unload(i + 1);
-    std::cout << "第" << i + 1 << "个点的任务已经完成" << std::endl;
+    std::cout << "Object " << i + 1 << " is unloaded." << std::endl;
   }
-  std::cout << "所有任务点飞行结束" << std::endl;
+
+  // 返回初始位置并降落
+  std::cout
+      << "All waypoints have been passed. Returning to the starting point."
+      << std::endl;
   while (state_drone.mode != "AUTO.LAND") {
     offb_set_mode.request.custom_mode = "AUTO.LAND";
     set_mode_client.call(offb_set_mode);
     ros::spinOnce();
     rate.sleep();
   }
-  std::cout << "已经成功切换到AUTO.LAND模式" << std::endl;
+  std::cout << "Switched to AUTO.LAND mode." << std::endl;
+
+  // 锁定无人机
   ros::Time land_time = ros::Time::now();
   while (state_drone.armed) {
     if (ros::Time::now() - land_time > ros::Duration(2.0)) {
@@ -212,6 +239,6 @@ int main(int argc, char **argv) {
     ros::spinOnce();
     rate.sleep();
   }
-  std::cout << "无人机成功上锁" << std::endl;
+  std::cout << "Drone is disarmed." << std::endl;
   return 0;
 }
