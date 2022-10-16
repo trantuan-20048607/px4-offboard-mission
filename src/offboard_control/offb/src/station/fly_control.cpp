@@ -7,7 +7,7 @@ double desire_z;                        // 巡航高度
 auto num_waypoints = 0;                 // 航点个数
 constexpr auto max_num_waypoints = 92;  // 最大航点个数
 double delta_xyz;                       // 移动步长
-double waypoint[96][3];                 // 航点
+double waypoint[96][3] = {0};           // 航点
 
 Eigen::Vector3d start_point, next_point, end_point;
 Eigen::Vector3d start_vel, landing_vel, slow_vel;
@@ -67,7 +67,7 @@ void fly_high(int i, double desire_z) {
       show_warning = true;
       offb.send_local_pos_setpoint(high_pos);
       if (high_pos[2] < desire_z) high_pos[2] += delta_xyz;
-    } else {
+    } else if (show_warning) {
       std::cout << "Drone is disarmed." << std::endl;
       show_warning = false;
     }
@@ -163,8 +163,8 @@ int main(int argc, char **argv) {
   arm_cmd.request.value = false;
 
   offboard_control::OffboardControl offb;
-  nh.getParam("station_fly_control_node/desire_z", desire_z);
-  nh.getParam("station_fly_control_node/delta_xyz", delta_xyz);
+  nh.getParam("station_fly_control/desire_z", desire_z);
+  nh.getParam("station_fly_control/delta_xyz", delta_xyz);
 
   // 等待连接
   while (!state_drone.connected) {
@@ -175,11 +175,11 @@ int main(int argc, char **argv) {
   std::cout << "Current cruising altitude: " << desire_z << std::endl;
 
   // 输入航点
-  for (; num_waypoints > 0 && num_waypoints <= max_num_waypoints;) {
+  do {
     std::cout << "Enter the num of waypoints: ";
     std::cin >> num_waypoints;
     std::cin.get();
-  }
+  } while (num_waypoints <= 0 || num_waypoints >= max_num_waypoints);
 
   for (auto i = 1; i <= num_waypoints; ++i) {
     std::cout << "Enter the waypoint " << i << " (x, y, " << desire_z
@@ -209,11 +209,11 @@ int main(int argc, char **argv) {
     next_point[0] = start_point[0];
     next_point[1] = start_point[1];
     next_point[2] = desire_z;
-    std::cout << "Departed to the waypoint " << i << "." << std::endl;
+    std::cout << "Departed from the waypoint " << i << "." << std::endl;
     fly_high(i, desire_z);
     fly_to(i);
     land();
-    std::cout << "Arrived at the waypoint " << i << "." << std::endl;
+    std::cout << "Arrived at the waypoint " << i + 1 << "." << std::endl;
     unload(i + 1);
     std::cout << "Object " << i + 1 << " is unloaded." << std::endl;
   }

@@ -4,7 +4,7 @@
 #include "offboard_control.h"
 
 int main(int argc, char** argv) {
-  uint8_t num;
+  uint8_t num = 0;
   ros::init(argc, argv, "station_servo_control");
   ros::NodeHandle nh;
   offboard_control::OffboardControl offb;
